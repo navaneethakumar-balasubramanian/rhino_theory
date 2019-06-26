@@ -1,27 +1,28 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-
-import numpy as np
-
-from theory import Pipe, Rock, TheoreticalWavelet
+from dash.dependencies import Input, Output
 
 import plotly.plotly as py
 import plotly.graph_objs as go
 from plotly import tools
 
-external_stylesheets = [
-    "https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-]
+import numpy as np
 
-app = dash.Dash(external_stylesheets=external_stylesheets)
+from theory import Pipe, Rock, TheoreticalWavelet
+from theory.app.app import app
 
-app.layout = html.Div(
+
+# def get_layout_by_component(component='axial'):
+#     if component == 'axial':
+#         velocity = 'alpha'
+#     else:
+#         velocity == 'beta'
+
+layout = html.Div(
     [
-        html.Div([html.H1("Rhino in Theory")]),
         html.Div(
             [
-                html.H3("Debugging Wavelets"),
                 html.Div(
                     [
                         html.Div(
@@ -81,9 +82,7 @@ app.layout = html.Div(
             ],
             className="row",
         ),
-    ],
-    className="container",
-)
+    ])
 
 
 @app.callback(
@@ -111,11 +110,11 @@ def update_window_title(value):
 
 
 @app.callback(
-    dash.dependencies.Output("wavelets", "figure"),
+    Output("wavelets", "figure"),
     [
-        dash.dependencies.Input("alpha-slider", "value"),
-        dash.dependencies.Input("rho-slider", "value"),
-        dash.dependencies.Input("window-slider", "value"),
+        Input("alpha-slider", "value"),
+        Input("rho-slider", "value"),
+        Input("window-slider", "value"),
     ],
 )
 def update_figure(alpha, rho, window):
@@ -145,16 +144,16 @@ def update_figure(alpha, rho, window):
         y=frequency_domain_reflected.imag, marker=dict(color="green")
     )
 
-    primary_nyquist = go.Scatter(
-        x=frequency_domain_primary.real,
-        y=frequency_domain_primary.imag,
-        marker=dict(color="red"),
-    )
-    reflected_nyquist = go.Scatter(
-        x=frequency_domain_reflected.real,
-        y=frequency_domain_reflected.imag,
-        marker=dict(color="green"),
-    )
+    # primary_nyquist = go.Scatter(
+    #     x=frequency_domain_primary.real,
+    #     y=frequency_domain_primary.imag,
+    #     marker=dict(color="red"),
+    # )
+    # reflected_nyquist = go.Scatter(
+    #     x=frequency_domain_reflected.real,
+    #     y=frequency_domain_reflected.imag,
+    #     marker=dict(color="green"),
+    # )
 
     primary_wavelet_full = go.Scatter(
         y=wavelet.primary_in_time_domain(None), marker=dict(color="red")
@@ -192,32 +191,15 @@ def update_figure(alpha, rho, window):
     )
 
     fig = tools.make_subplots(
-        rows=7,
-        cols=7,
+        rows=6,
+        cols=6,
         specs=[
-            [None, {"colspan": 4, "rowspan": 2}, None, None, None, None, None],
-            [None, None, None, None, None, None, None],
-            [{"colspan": 3}, None, None, {"colspan": 3}, None, None, {"colspan": 1}],
-            [{"colspan": 3}, None, None, {"colspan": 3}, None, None, {"colspan": 1}],
-            [
-                {"colspan": 2, "rowspan": 1},
-                None,
-                {"colspan": 2, "rowspan": 1},
-                None,
-                {"colspan": 2, "rowspan": 1},
-                None,
-                None,
-            ],
-            [
-                {"colspan": 2, "rowspan": 2},
-                None,
-                {"colspan": 2, "rowspan": 2},
-                None,
-                {"colspan": 2, "rowspan": 2},
-                None,
-                None,
-            ],
-            [None, None, None, None, None, None, None],
+            [{"colspan": 1, "rowspan": 1}, None, None, None, None, None],
+            [{"colspan": 3}, None, None, {"colspan": 3}, None, None],
+            [{"colspan": 3}, None, None, {"colspan": 3}, None, None],
+            [{"colspan": 2, "rowspan": 1}, None, {"colspan": 2, "rowspan": 1}, None, {"colspan": 2, "rowspan": 1}, None],
+            [{"colspan": 2, "rowspan": 2}, None, {"colspan": 2, "rowspan": 2}, None, {"colspan": 2, "rowspan": 2}, None],
+            [None, None, None, None, None, None],
         ],
         subplot_titles=(
             "Frequency Plot",
@@ -233,24 +215,18 @@ def update_figure(alpha, rho, window):
         ),
     )
 
-    fig.append_trace(frequencies_trace, 1, 2)
-    fig.append_trace(primary_real, 3, 1)
-    fig.append_trace(primary_imag, 3, 4)
-    fig.append_trace(primary_nyquist, 3, 7)
-    fig.append_trace(reflected_real, 4, 1)
-    fig.append_trace(reflected_imag, 4, 4)
-    fig.append_trace(reflected_nyquist, 4, 7)
-    fig.append_trace(primary_wavelet_full, 5, 1)
-    fig.append_trace(reflected_wavelet_full, 5, 3)
-    fig.append_trace(multiple_wavelet_full, 5, 5)
-    fig.append_trace(primary_wavelet, 6, 1)
-    fig.append_trace(reflected_wavelet, 6, 3)
-    fig.append_trace(multiple_wavelet, 6, 5)
+    fig.append_trace(frequencies_trace, 1, 1)
+    fig.append_trace(primary_real, 2, 1)
+    fig.append_trace(primary_imag, 2, 4)
+    fig.append_trace(reflected_real, 3, 1)
+    fig.append_trace(reflected_imag, 3, 4)
+    fig.append_trace(primary_wavelet_full, 4, 1)
+    fig.append_trace(reflected_wavelet_full, 4, 3)
+    fig.append_trace(multiple_wavelet_full, 4, 5)
+    fig.append_trace(primary_wavelet, 5, 1)
+    fig.append_trace(reflected_wavelet, 5, 3)
+    fig.append_trace(multiple_wavelet, 5, 5)
 
     fig["layout"].update(height=1000, width=1000, showlegend=False, template="seaborn")
 
     return fig
-
-
-if __name__ == "__main__":
-    app.run_server(debug=True)

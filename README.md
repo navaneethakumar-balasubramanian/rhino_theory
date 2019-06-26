@@ -9,7 +9,7 @@
 
 ## Running the web app
 
-1. `python app/app.py`
+1. `python theory/app/index.py`
 
 # Maintainer
 
