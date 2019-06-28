@@ -126,12 +126,8 @@ def update_figure(alpha, rho, window):
     rock = Rock(alpha, rho)
     wavelet = TheoreticalWavelet(pipe, rock, frequencies=f)
 
-    frequency_domain_primary = wavelet.amp_phase2complex(
-        *wavelet.primary_in_frequency_domain
-    )
-    frequency_domain_reflected = wavelet.amp_phase2complex(
-        *wavelet.reflected_in_frequency_domain
-    )
+    frequency_domain_primary = wavelet.make_symmetry_on_complex(wavelet.primary_in_frequency_domain_complex)
+    frequency_domain_reflected = wavelet.make_symmetry_on_complex(wavelet.reflected_in_frequency_domain_complex)
 
     frequencies_trace = go.Scatter(y=f, mode="lines", marker=dict(color="black"))
 
@@ -205,13 +201,14 @@ def update_figure(alpha, rho, window):
             "Frequency Plot",
             "Primary - Real (freq)",
             "Primary - Imag (freq)",
-            "Primary - Nyquist",
             "Reflected - Real (freq)",
             "Reflected - Imag (freq)",
-            "Reflected - Nyquist",
+            "Full Primary Wavelet (time)",
+            "Full Reflected Wavelet (time)",
+            "Full Multiple Wavelet (time)",
             "Primary Wavelet (time)",
             "Reflected Wavelet (time)",
-            "Multiple Wavelet",
+            "Multiple Wavelet (time)",
         ),
     )
 
