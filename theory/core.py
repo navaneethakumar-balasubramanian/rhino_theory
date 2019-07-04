@@ -13,14 +13,15 @@ class Pipe(object):
     """
 
     def __init__(self, Ro=0.1365, Ri=0.0687, Rb=0.16, alpha=4875,
-                 rho=7200,
-                 beta=2368):
+                 rho=7200, beta=2368, component='axial'):
+
         self.Ro = Ro
         self.Ri = Ri
         self.Rb = Rb
         self.alpha = alpha
         self.rho = rho
         self.beta = beta
+        self.component = component
 
     @property
     def A1(self):
@@ -37,18 +38,14 @@ class Pipe(object):
         return np.pi * (self.Rb ** 2)
 
     @property
-    def Z1_axial(self):
+    def Z1(self):
         """
         Steel impedance.
         """
-        return self.Ab * self.rho * self.alpha * 0.00001
-
-    @property
-    def Z1_tangential(self):
-        """
-        Steel impedance.
-        """
-        return self.Ab * self.rho * self.beta * 0.00001
+        if self.component == 'axial':
+            return self.Ab * self.rho * self.alpha
+        if self.component == 'tangential':
+            return self.Ab * self.rho * self.beta
 
 class Rock(object):
     """
@@ -57,19 +54,27 @@ class Rock(object):
         rho (np.array or float): Density of the rock.
     """
 
-    def __init__(self, alpha=None, rho=None, beta=None):
+    def __init__(self, alpha=None, rho=None, beta=None, component='axial'):
         self.alpha = alpha
         self.rho = rho
         self.beta = beta
 
 
 class TheoreticalWavelet(object):
-    def __init__(self, pipe, rock, frequencies):
+    def __init__(self, pipe, rock, frequencies, component='axial'):
         self.rock = rock
         self.pipe = pipe
         self.frequencies = frequencies
+        self.component = component
 
-        self.k = 2 * np.pi * self.frequencies / self.rock.alpha  # wave_number
+        self.pipe.component = component
+        self.rock.component = component
+
+        if self.component == 'axial':
+            self.k = 2 * np.pi * self.frequencies / self.rock.alpha  # wave_number
+        if self.component == 'tangential':
+            self.k = 2 * np.pi * self.frequencies / self.rock.beta  # wave_number
+
         self.cot_phi = -1 * (self.k * self.pipe.Rb * (1 + 6 * np.sqrt(3)) / 12)
 
         if not (type(self.frequencies) in (int, float)):
@@ -87,18 +92,16 @@ class TheoreticalWavelet(object):
 
     @property
     def Zb(self):
-        return (
-            ((self.pipe.Ab * self.rock.rho * self.rock.alpha) / (self.k * self.pipe.Rb))
-            / (1j - self.cot_phi)
-            * 0.00001
-        )
+        if self.component == 'axial':
+            return (
+                ((self.pipe.Ab * self.rock.rho * self.rock.alpha) / (self.k * self.pipe.Rb))
+                / (1j - self.cot_phi))
+        if self.component == 'tangential':
+            array = (
+                ((self.pipe.Ab * self.rock.rho * self.rock.beta) / (self.k * self.pipe.Rb))
+                / (1j - self.cot_phi))
+            return array
 
-    @property
-    def Zb_tangential(self):
-        return (
-            ((self.pipe.Ab * self.rock.rho * self.rock.beta) / (self.k * self.pipe.Rb))
-            / (1j - self.cot_phi)
-            * 0.00001) * (2*np.pi*self.frequencies/self.pipe.Rb)
 
     @property
     def wave_number(self):
@@ -115,49 +118,26 @@ class TheoreticalWavelet(object):
     @property
     def primary_in_frequency_domain_complex(self):
         # jamies implementation
-        RC_complex_real = (self.pipe.Z1_axial*self.Zb.real*(self.pipe.Z1_axial-self.Zb.real) + self.pipe.Z1_axial * self.Zb.imag**2) / ((self.pipe.Z1_axial + self.Zb.real)**2 + (self.Zb.imag)**2)
-        RC_complex_imag = (self.pipe.Z1_axial*self.Zb.imag * (self.pipe.Z1_axial - self.Zb.real)) / ((self.pipe.Z1_axial + self.Zb.real)**2 + (self.Zb.imag)**2)
-        RC_complex = RC_complex_real + RC_complex_imag * 1j
+        # RC_complex_real = (self.pipe.Z1*self.Zb.real*(self.pipe.Z1-self.Zb.real) + self.pipe.Z1 * self.Zb.imag**2) / ((self.pipe.Z1 + self.Zb.real)**2 + (self.Zb.imag)**2)
+        # RC_complex_imag = (self.pipe.Z1*self.Zb.imag * (self.pipe.Z1 - self.Zb.real)) / ((self.pipe.Z1 + self.Zb.real)**2 + (self.Zb.imag)**2)
+        # RC_complex = RC_complex_real + RC_complex_imag * 1j
 
-        # RC_complex = (self.pipe.Z1_axial * self.Zb) / (self.pipe.Z1_axial + self.Zb)
-
-        if not (type(self.frequencies) in (int, float)):
-            RC_complex = self._fill_complex_nans(RC_complex)
-
-        return RC_complex
-
-    @property
-    def primary_in_frequency_domain_complex_tangential(self):
-        # jamies implementation
-        RC_complex_real = (self.pipe.Z1_tangential*self.Zb_tangential.real*(self.pipe.Z1_tangential-self.Zb_tangential.real) + self.pipe.Z1_tangential * self.Zb_tangential.imag**2) / ((self.pipe.Z1_tangential + self.Zb_tangential.real)**2 + (self.Zb_tangential.imag)**2)
-        RC_complex_imag = (self.pipe.Z1_tangential*self.Zb_tangential.imag * (self.pipe.Z1_tangential - self.Zb_tangential.real)) / ((self.pipe.Z1_tangential + self.Zb_tangential.real)**2 + (self.Zb_tangential.imag)**2)
-        RC_complex = RC_complex_real - RC_complex_imag * 1j
-
-        # RC_complex = (self.pipe.Z1_axial * self.Zb) / (self.pipe.Z1_axial + self.Zb)
+        RC_complex = (self.pipe.Z1 * self.Zb) / (self.pipe.Z1 + self.Zb)
 
         if not (type(self.frequencies) in (int, float)):
             RC_complex = self._fill_complex_nans(RC_complex)
 
-        return RC_complex
-
+        return (RC_complex)
 
     @property
     def reflected_in_frequency_domain_complex(self):
 
         #brunos implementation
-        RC_complex = (self.pipe.Z1_axial - self.Zb) / (self.pipe.Z1_axial + self.Zb)
+        RC_complex = (self.pipe.Z1 - self.Zb) / (self.pipe.Z1 + self.Zb)
         if not (type(self.frequencies) in (int, float)):
             RC_complex = self._fill_complex_nans(RC_complex)
         return RC_complex
 
-    @property
-    def reflected_in_frequency_domain_complex_tangential(self):
-
-        #brunos implementation
-        RC_complex = (self.pipe.Z1_tangential - self.Zb_tangential) / (self.pipe.Z1_tangential + self.Zb_tangential)
-        if not (type(self.frequencies) in (int, float)):
-            RC_complex = self._fill_complex_nans(RC_complex)
-        return RC_complex
 
     @property
     def primary_in_frequency_domain(self):
@@ -168,14 +148,6 @@ class TheoreticalWavelet(object):
         return (np.abs(RC_complex)), (np.arctan(RC_complex.imag / RC_complex.real))
 
     @property
-    def primary_in_frequency_domain_tangential(self):
-        """
-        returns: (amplitude, phase)
-        """
-        RC_complex = self.primary_in_frequency_domain_complex_tangential
-        return (np.abs(RC_complex)), (np.arctan(RC_complex.imag / RC_complex.real))
-
-    @property
     def reflected_in_frequency_domain(self):
         """
         returns: (amplitude, phase)
@@ -183,13 +155,6 @@ class TheoreticalWavelet(object):
         RC_complex = self.reflected_in_frequency_domain_complex
         return (np.abs(RC_complex)), (np.arctan(RC_complex.imag / RC_complex.real))
 
-    @property
-    def reflected_in_frequency_domain_tangential(self):
-        """
-        returns: (amplitude, phase)
-        """
-        RC_complex = self.reflected_in_frequency_domain_complex_tangential
-        return (np.abs(RC_complex)), (np.arctan(RC_complex.imag / RC_complex.real))
 
     @classmethod
     def make_symmetry_on_complex(cls, freq_domain):
@@ -210,19 +175,12 @@ class TheoreticalWavelet(object):
         if (type(amplitude) in (int, float)):
             return freq_domain.real + freq_domain.imag * 1j
         # Quick hack to make array symmetric and imaginary part be flipped
-        freq_domain_real = np.r_[freq_domain.real, freq_domain.real[:-1][::-1]][:-1]
-        freq_domain_imag = np.r_[freq_domain.imag, freq_domain.imag[:-1][::-1]][:-1]
 
-        freq_domain_imag[int(len(freq_domain_imag) / 2) :] = -freq_domain_imag[
-            int(len(freq_domain_imag) / 2) :
-        ]
-
-        # freq_domain_imag[self.symmetric_frequencies == 0
-
-        return freq_domain_real + freq_domain_imag * 1j
+        return cls.make_symmetry_on_complex(freq_domain)
 
     @classmethod
     def inverse_transform(cls, complex_array):
+        complex_array = cls._fill_complex_nans(complex_array)
         time_domain = np.fft.ifft(complex_array)
         return np.fft.fftshift(time_domain)
 
@@ -236,6 +194,8 @@ class TheoreticalWavelet(object):
         time_domain = self._wavelet_to_timedomain(
             *self.primary_in_frequency_domain
         ).real
+        if self.component == 'tangential':
+            time_domain = np.gradient(time_domain, 2)
         if window:
             center_index = int(time_domain.shape[0] / 2)
             time_domain = time_domain[
@@ -246,21 +206,6 @@ class TheoreticalWavelet(object):
         else:
             return time_domain
 
-    def primary_in_time_domain_tangential(self, window=None, resample=None):
-        """
-        """
-        time_domain = self._wavelet_to_timedomain(
-            *self.primary_in_frequency_domain_tangential
-        ).real
-        if window:
-            center_index = int(time_domain.shape[0] / 2)
-            time_domain = time_domain[
-                center_index - int(window / 2) : center_index + int(window / 2)
-            ]
-        if resample:
-            return signal.resample(time_domain, resample)
-        else:
-            return time_domain
 
     def reflected_in_time_domain(self, window=None, resample=None):
         """
@@ -268,6 +213,8 @@ class TheoreticalWavelet(object):
         time_domain = self._wavelet_to_timedomain(
             *self.reflected_in_frequency_domain
         ).real
+        if self.component == 'tangential':
+            time_domain = np.gradient(time_domain, 2)
         if window:
             center_index = int(time_domain.shape[0] / 2)
             time_domain = time_domain[
@@ -278,21 +225,6 @@ class TheoreticalWavelet(object):
         else:
             return time_domain
 
-    def reflected_in_time_domain_tangential(self, window=None, resample=None):
-        """
-        """
-        time_domain = self._wavelet_to_timedomain(
-            *self.reflected_in_frequency_domain_tangential
-        ).real
-        if window:
-            center_index = int(time_domain.shape[0] / 2)
-            time_domain = time_domain[
-                center_index - int(window / 2) : center_index + int(window / 2)
-            ]
-        if resample:
-            return signal.resample(time_domain, resample)
-        else:
-            return time_domain
 
     def multiple_in_time_domain(self, window=None, resample=None):
         primary, reflected = (
@@ -300,17 +232,8 @@ class TheoreticalWavelet(object):
             self.reflected_in_time_domain(window),
         )
         convolved = signal.convolve(primary, reflected, mode="same", method="direct")
-        if resample:
-            return signal.resample(convolved, resample)
-        else:
-            return convolved
-
-    def multiple_in_time_domain_tangential(self, window=None, resample=None):
-        primary, reflected = (
-            self.primary_in_time_domain_tangential(window),
-            self.reflected_in_time_domain_tangential(window),
-        )
-        convolved = signal.convolve(primary, reflected, mode="same", method="direct")
+        if self.component == 'tangential':
+            convolved = np.gradient(convolved, 2)
         if resample:
             return signal.resample(convolved, resample)
         else:

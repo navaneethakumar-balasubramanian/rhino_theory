@@ -25,6 +25,33 @@ layout = html.Div(
             [
                 html.Div(
                     [
+                        html.Div([
+                                html.Label('Component'),
+                                dcc.RadioItems(
+                                    options=[
+                                        {'label': 'Axial', 'value': 'axial'},
+                                        {'label': 'Tangential', 'value': 'tangential'},
+                                    ],
+                                    value='axial',
+                                    id='component-selector',
+                                ),
+                            ],
+                            className="col-sm",
+                        ),
+                        html.Div(
+                            [
+                                html.H5("rho", id="rho-title", className="column"),
+                                dcc.Slider(
+                                    id="rho-slider",
+                                    min=1000,
+                                    max=3000,
+                                    step=100,
+                                    value=1500,
+                                    className="column",
+                                ),
+                            ],
+                            className="col-sm",
+                        ),
                         html.Div(
                             [
                                 html.H5("alpha", id="alpha-title", className="column"),
@@ -41,11 +68,11 @@ layout = html.Div(
                         ),
                         html.Div(
                             [
-                                html.H5("rho", id="rho-title", className="column"),
+                                html.H5("beta", id="beta-title", className="column"),
                                 dcc.Slider(
-                                    id="rho-slider",
-                                    min=1000,
-                                    max=3000,
+                                    id="beta-slider",
+                                    min=500,
+                                    max=9000,
                                     step=100,
                                     value=1500,
                                     className="column",
@@ -100,6 +127,12 @@ def update_rho_title(value):
 def update_alpha_title(value):
     return "alpha: {}".format(str(value))
 
+@app.callback(
+    dash.dependencies.Output("beta-title", "children"),
+    [dash.dependencies.Input("beta-slider", "value")],
+)
+def update_alpha_title(value):
+    return "beta: {}".format(str(value))
 
 @app.callback(
     dash.dependencies.Output("window-title", "children"),
@@ -114,17 +147,19 @@ def update_window_title(value):
     [
         Input("alpha-slider", "value"),
         Input("rho-slider", "value"),
+        Input("beta-slider", "value"),
         Input("window-slider", "value"),
+        Input("component-selector", "value"),
     ],
 )
-def update_figure(alpha, rho, window):
+def update_figure(alpha, rho, beta, window, component):
 
     j = np.arange(10001) + 1
     f = (j - 1) * 0.5
 
-    pipe = Pipe(Ro=0.1365, Ri=0.0687, Rb=0.16, alpha=4875, rho=7800)
-    rock = Rock(alpha, rho)
-    wavelet = TheoreticalWavelet(pipe, rock, frequencies=f)
+    pipe = Pipe(Ro=0.1365, Ri=0.0687, Rb=0.16, alpha=4875, rho=7800, beta=2368)
+    rock = Rock(alpha, rho, beta)
+    wavelet = TheoreticalWavelet(pipe, rock, frequencies=f, component=component)
 
     frequency_domain_primary = wavelet.make_symmetry_on_complex(wavelet.primary_in_frequency_domain_complex)
     frequency_domain_reflected = wavelet.make_symmetry_on_complex(wavelet.reflected_in_frequency_domain_complex)
