@@ -5,7 +5,7 @@ import dash_html_components as html
 from theory.app.app import app
 
 def get_menu():
-    menu = dcc.Tabs(id='menu-tabs', value='tabs', children=[
+    menu = dcc.Tabs(id='menu-tabs', value='debug', children=[
         dcc.Tab(label='Debug', value='debug'),
         dcc.Tab(label='Explore', value='explore'),
     ],)

@@ -13,12 +13,6 @@ from theory import Pipe, Rock, TheoreticalWavelet
 from theory.app.app import app
 
 
-# def get_layout_by_component(component='axial'):
-#     if component == 'axial':
-#         velocity = 'alpha'
-#     else:
-#         velocity == 'beta'
-
 layout = html.Div(
     [
         html.Div(
@@ -42,7 +36,7 @@ layout = html.Div(
                         ),
                         html.Div(
                             [
-                                html.H5("rho", id="rho-title", className="column"),
+                                html.Label("rho", id="rho-title", className="column"),
                                 dcc.Slider(
                                     id="rho-slider",
                                     min=1000,
@@ -56,7 +50,7 @@ layout = html.Div(
                         ),
                         html.Div(
                             [
-                                html.H5("alpha", id="alpha-title", className="column"),
+                                html.Label("alpha", id="alpha-title", className="column"),
                                 dcc.Slider(
                                     id="alpha-slider",
                                     min=1000,
@@ -70,7 +64,7 @@ layout = html.Div(
                         ),
                         html.Div(
                             [
-                                html.H5("beta", id="beta-title", className="column"),
+                                html.Label("beta", id="beta-title", className="column"),
                                 dcc.Slider(
                                     id="beta-slider",
                                     min=500,
@@ -84,7 +78,7 @@ layout = html.Div(
                         ),
                         html.Div(
                             [
-                                html.H5(
+                                html.Label(
                                     "window", id="window-title", className="column"
                                 ),
                                 dcc.Slider(
@@ -99,17 +93,15 @@ layout = html.Div(
                             className="col-sm",
                         ),
                     ],
-                    className="row",
+                    className="d-flex flex-wrap",
                 ),
             ]
         ),
         html.Div(
             [
-                html.Div(dcc.Graph(id="wavelets", animate=False), className="col-sm"),
-                # html.Div(dcc.Graph(id='reflected'), className="col-sm"),
-                # html.Div(dcc.Graph(id='multiple'), className="col-sm")
+                html.Div(dcc.Graph(id="wavelets", animate=False)),
             ],
-            className="row",
+            className="d-inline-flex flex-wrap",
         ),
     ])
 
@@ -166,8 +158,6 @@ def update_figure(alpha, rho, beta, window, component):
     frequency_domain_primary = wavelet.make_symmetry_on_complex(wavelet.primary_in_frequency_domain_complex)
     frequency_domain_reflected = wavelet.make_symmetry_on_complex(wavelet.reflected_in_frequency_domain_complex)
 
-    frequencies_trace = go.Scatter(y=f, mode="lines", marker=dict(color="black"))
-
     primary_real = go.Scatter(y=frequency_domain_primary.real, marker=dict(color="red"))
     primary_imag = go.Scatter(y=frequency_domain_primary.imag, marker=dict(color="red"))
     reflected_real = go.Scatter(
@@ -176,17 +166,6 @@ def update_figure(alpha, rho, beta, window, component):
     reflected_imag = go.Scatter(
         y=frequency_domain_reflected.imag, marker=dict(color="green")
     )
-
-    # primary_nyquist = go.Scatter(
-    #     x=frequency_domain_primary.real,
-    #     y=frequency_domain_primary.imag,
-    #     marker=dict(color="red"),
-    # )
-    # reflected_nyquist = go.Scatter(
-    #     x=frequency_domain_reflected.real,
-    #     y=frequency_domain_reflected.imag,
-    #     marker=dict(color="green"),
-    # )
 
     primary_wavelet_full = go.Scatter(
         y=wavelet.primary_in_time_domain(None), marker=dict(color="red")
@@ -224,10 +203,9 @@ def update_figure(alpha, rho, beta, window, component):
     )
 
     fig = tools.make_subplots(
-        rows=6,
+        rows=5,
         cols=6,
         specs=[
-            [{"colspan": 1, "rowspan": 1}, None, None, None, None, None],
             [{"colspan": 3}, None, None, {"colspan": 3}, None, None],
             [{"colspan": 3}, None, None, {"colspan": 3}, None, None],
             [{"colspan": 2, "rowspan": 1}, None, {"colspan": 2, "rowspan": 1}, None, {"colspan": 2, "rowspan": 1}, None],
@@ -235,7 +213,6 @@ def update_figure(alpha, rho, beta, window, component):
             [None, None, None, None, None, None],
         ],
         subplot_titles=(
-            "Frequency Plot",
             "Primary - Real (freq)",
             "Primary - Imag (freq)",
             "Reflected - Real (freq)",
@@ -249,18 +226,17 @@ def update_figure(alpha, rho, beta, window, component):
         ),
     )
 
-    fig.append_trace(frequencies_trace, 1, 1)
-    fig.append_trace(primary_real, 2, 1)
-    fig.append_trace(primary_imag, 2, 4)
-    fig.append_trace(reflected_real, 3, 1)
-    fig.append_trace(reflected_imag, 3, 4)
-    fig.append_trace(primary_wavelet_full, 4, 1)
-    fig.append_trace(reflected_wavelet_full, 4, 3)
-    fig.append_trace(multiple_wavelet_full, 4, 5)
-    fig.append_trace(primary_wavelet, 5, 1)
-    fig.append_trace(reflected_wavelet, 5, 3)
-    fig.append_trace(multiple_wavelet, 5, 5)
+    fig.append_trace(primary_real, 1, 1)
+    fig.append_trace(primary_imag, 1, 4)
+    fig.append_trace(reflected_real, 2, 1)
+    fig.append_trace(reflected_imag, 2, 4)
+    fig.append_trace(primary_wavelet_full, 3, 1)
+    fig.append_trace(reflected_wavelet_full, 3, 3)
+    fig.append_trace(multiple_wavelet_full, 3, 5)
+    fig.append_trace(primary_wavelet, 4, 1)
+    fig.append_trace(reflected_wavelet, 4, 3)
+    fig.append_trace(multiple_wavelet, 4, 5)
 
-    fig["layout"].update(height=1000, width=1000, showlegend=False, template="seaborn")
+    fig["layout"].update(height=1000, width=1100, showlegend=False, template="seaborn")
 
     return fig
