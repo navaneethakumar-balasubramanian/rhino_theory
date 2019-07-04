@@ -9,3 +9,5 @@ external_stylesheets = [
 app = dash.Dash(external_stylesheets=external_stylesheets)
 
 app.config.suppress_callback_exceptions = True
+
+app.title = 'Rhino in Theory'
