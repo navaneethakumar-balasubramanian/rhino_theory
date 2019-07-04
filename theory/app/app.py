@@ -6,6 +6,6 @@ external_stylesheets = [
     "https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
 ]
 
-app = dash.Dash(external_stylesheets=external_stylesheets, static_folder='assets')
+app = dash.Dash(external_stylesheets=external_stylesheets)
 
 app.config.suppress_callback_exceptions = True
