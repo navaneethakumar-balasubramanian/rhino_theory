@@ -34,6 +34,8 @@ layout = html.Div(
                                     ],
                                     value='axial',
                                     id='component-selector',
+                                    className='btn-group',
+                                    labelClassName='btn btn-secondary'
                                 ),
                             ],
                             className="col-sm",

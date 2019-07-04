@@ -8,14 +8,15 @@ def get_menu():
     menu = dcc.Tabs(id='menu-tabs', value='tabs', children=[
         dcc.Tab(label='Debug', value='debug'),
         dcc.Tab(label='Explore', value='explore'),
-    ])
+    ],)
     return menu
 
 def get_logo():
-    return html.Img(src=app.get_asset_url('logo.svg'), height='60px')
+    return html.Img(src=app.get_asset_url('logo.svg'), height='60px',
+                    style={'margin-right': '1%'})
 
 def get_header():
     return html.Div([
         get_logo(),
         get_menu(),
-    ], className='row')
+    ], className='row', style={'padding': '1%'})
