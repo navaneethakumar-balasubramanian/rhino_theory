@@ -11,91 +11,22 @@ import numpy as np
 
 from theory import Pipe, Rock, TheoreticalWavelet
 from theory.app.app import app
+from theory.app.pages.debugging_controls import rock_controls, pipe_controls, component_controls
 
 
 layout = html.Div(
     [
         html.Div(
             [
-                html.Div(
-                    [
-                        html.Div([
-                                html.Label('Component'),
-                                dcc.RadioItems(
-                                    options=[
-                                        {'label': 'Axial', 'value': 'axial'},
-                                        {'label': 'Tangential', 'value': 'tangential'},
-                                    ],
-                                    value='axial',
-                                    id='component-selector',
-                                    className='btn-group',
-                                    labelClassName='btn btn-secondary'
-                                ),
-                            ],
-                            className="col-sm",
-                        ),
-                        html.Div(
-                            [
-                                html.Label("rho", id="rho-title", className="column"),
-                                dcc.Slider(
-                                    id="rho-slider",
-                                    min=1000,
-                                    max=3000,
-                                    step=100,
-                                    value=1500,
-                                    className="column",
-                                ),
-                            ],
-                            className="col-sm",
-                        ),
-                        html.Div(
-                            [
-                                html.Label("alpha", id="alpha-title", className="column"),
-                                dcc.Slider(
-                                    id="alpha-slider",
-                                    min=1000,
-                                    max=9000,
-                                    step=100,
-                                    value=1500,
-                                    className="column",
-                                ),
-                            ],
-                            className="col-sm",
-                        ),
-                        html.Div(
-                            [
-                                html.Label("beta", id="beta-title", className="column"),
-                                dcc.Slider(
-                                    id="beta-slider",
-                                    min=500,
-                                    max=9000,
-                                    step=100,
-                                    value=1500,
-                                    className="column",
-                                ),
-                            ],
-                            className="col-sm",
-                        ),
-                        html.Div(
-                            [
-                                html.Label(
-                                    "window", id="window-title", className="column"
-                                ),
-                                dcc.Slider(
-                                    id="window-slider",
-                                    min=10,
-                                    max=200,
-                                    step=10,
-                                    value=30,
-                                    className="column",
-                                ),
-                            ],
-                            className="col-sm",
-                        ),
+                *component_controls,
+                html.Div([
+                    *pipe_controls,
+                    *rock_controls,
                     ],
-                    className="d-flex flex-wrap",
+                    className='d-flex flex-column'
                 ),
-            ]
+            ],
+            className="d-flex flex-row"
         ),
         html.Div(
             [
@@ -103,7 +34,8 @@ layout = html.Div(
             ],
             className="d-inline-flex flex-wrap",
         ),
-    ])
+    ]
+    )
 
 
 @app.callback(
@@ -144,14 +76,18 @@ def update_window_title(value):
         Input("beta-slider", "value"),
         Input("window-slider", "value"),
         Input("component-selector", "value"),
+        Input("pipe-alpha-input", "value"),
+        Input("pipe-rho-input", "value"),
+        Input("pipe-beta-input", "value"),
+        Input("pipe-rb-input", "value"),
     ],
 )
-def update_figure(alpha, rho, beta, window, component):
+def update_figure(alpha, rho, beta, window, component, pipe_alpha, pipe_rho, pipe_beta, pipe_rb):
 
     j = np.arange(10001) + 1
     f = (j - 1) * 0.5
 
-    pipe = Pipe(Ro=0.1365, Ri=0.0687, Rb=0.16, alpha=4875, rho=7800, beta=2368)
+    pipe = Pipe(Ro=0.1365, Ri=0.0687, Rb=pipe_rb, alpha=pipe_alpha, rho=pipe_rho, beta=pipe_beta)
     rock = Rock(alpha, rho, beta)
     wavelet = TheoreticalWavelet(pipe, rock, frequencies=f, component=component)
 
@@ -209,7 +145,7 @@ def update_figure(alpha, rho, beta, window, component):
             [{"colspan": 3}, None, None, {"colspan": 3}, None, None],
             [{"colspan": 3}, None, None, {"colspan": 3}, None, None],
             [{"colspan": 2, "rowspan": 1}, None, {"colspan": 2, "rowspan": 1}, None, {"colspan": 2, "rowspan": 1}, None],
-            [{"colspan": 2, "rowspan": 2}, None, {"colspan": 2, "rowspan": 2}, None, {"colspan": 2, "rowspan": 2}, None],
+            [{"colspan": 2, "rowspan": 1}, None, {"colspan": 2, "rowspan": 1}, None, {"colspan": 2, "rowspan": 1}, None],
             [None, None, None, None, None, None],
         ],
         subplot_titles=(
