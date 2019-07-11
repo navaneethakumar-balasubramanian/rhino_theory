@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import signal
 
+from dcrhino3.signal_processing.filters import FIRLSFilter
 
 class Pipe(object):
     """
@@ -61,14 +62,33 @@ class Rock(object):
 
 
 class TheoreticalWavelet(object):
-    def __init__(self, pipe, rock, frequencies, component='axial'):
+
+    def __init__(self,
+                 pipe,
+                 rock,
+                 frequency_resolution=0.5,
+                 nyquist=5000,
+                 filterby=[40, 50, 200, 240],
+                 component='axial'):
+
+
         self.rock = rock
         self.pipe = pipe
-        self.frequencies = frequencies
         self.component = component
 
         self.pipe.component = component
         self.rock.component = component
+
+        self.frequency_resolution = frequency_resolution
+        self.nyquist = nyquist
+        self.sampling_rate = 2 * nyquist
+        self.sampling_interval = (1 / self.sampling_rate)
+        self.number_of_samples = 1 / (self.frequency_resolution * self.sampling_interval)
+
+        self.frequencies = np.arange(0, self.nyquist + self.frequency_resolution, self.frequency_resolution)
+
+        if not (type(self.frequencies) in (int, float)):
+            self.symmetric_frequencies = np.r_[-self.frequencies[1:-1][::-1], self.frequencies]
 
         if self.component == 'axial':
             self.k = 2 * np.pi * self.frequencies / self.rock.alpha  # wave_number
@@ -77,21 +97,25 @@ class TheoreticalWavelet(object):
 
         self.cot_phi = -1 * (self.k * self.pipe.Rb * (1 + 6 * np.sqrt(3)) / 12)
 
-        if not (type(self.frequencies) in (int, float)):
-            self.symmetric_frequencies = np.r_[-frequencies[1:-1][::-1], frequencies]
-            self.nyquist = self.frequencies.max()
-            self.max_frequency = self.nyquist * 2
-            self.time_sampling = 1 / self.max_frequency
+        if filterby:
+            corners = filterby
 
+            filter_duration = 0.1
+            firls = FIRLSFilter(corners, filter_duration)
+            self.fir_taps = firls.make(self.sampling_rate)
 
     def get_time_range_for_window(self, window):
         time_sampling_window = (np.arange(
-                0 - (window / 2 * self.time_sampling),
-                0 + (window / 2 * self.time_sampling),   self.time_sampling,)* 1000)
+                0 - (window / 2 * self.sampling_interval),
+                0 + (window / 2 * self.sampling_interval),   self.sampling_interval,)* 1000)
         return time_sampling_window
 
     @property
     def Zb(self):
+        '''
+        Elastic impedance of the rock. dens x Vp^2
+        Measures compressional modulus.
+        '''
         if self.component == 'axial':
             return (
                 ((self.pipe.Ab * self.rock.rho * self.rock.alpha) / (self.k * self.pipe.Rb))
@@ -117,10 +141,6 @@ class TheoreticalWavelet(object):
 
     @property
     def primary_in_frequency_domain_complex(self):
-        # jamies implementation
-        # RC_complex_real = (self.pipe.Z1*self.Zb.real*(self.pipe.Z1-self.Zb.real) + self.pipe.Z1 * self.Zb.imag**2) / ((self.pipe.Z1 + self.Zb.real)**2 + (self.Zb.imag)**2)
-        # RC_complex_imag = (self.pipe.Z1*self.Zb.imag * (self.pipe.Z1 - self.Zb.real)) / ((self.pipe.Z1 + self.Zb.real)**2 + (self.Zb.imag)**2)
-        # RC_complex = RC_complex_real + RC_complex_imag * 1j
 
         RC_complex = (self.pipe.Z1 * self.Zb) / (self.pipe.Z1 + self.Zb)
 
@@ -188,14 +208,17 @@ class TheoreticalWavelet(object):
         complex_array = self.amp_phase2complex(amplitude, phase)
         return self.inverse_transform(complex_array)
 
-    def primary_in_time_domain(self, window=None, resample=None):
+    def primary_in_time_domain(self, window=None, resample=None, skip_derivative=False, filtered=True):
         """
         """
         time_domain = self._wavelet_to_timedomain(
             *self.primary_in_frequency_domain
         ).real
         if self.component == 'tangential':
-            time_domain = np.gradient(time_domain, 2)
+            if not skip_derivative:
+                time_domain = np.gradient(time_domain, 1)
+        if filtered:
+            time_domain = signal.filtfilt(self.fir_taps, 1, time_domain)
         if window:
             center_index = int(time_domain.shape[0] / 2)
             time_domain = time_domain[
@@ -207,14 +230,17 @@ class TheoreticalWavelet(object):
             return time_domain
 
 
-    def reflected_in_time_domain(self, window=None, resample=None):
+    def reflected_in_time_domain(self, window=None, resample=None, skip_derivative=False, filtered=False):
         """
         """
         time_domain = self._wavelet_to_timedomain(
             *self.reflected_in_frequency_domain
         ).real
         if self.component == 'tangential':
-            time_domain = np.gradient(time_domain, 2)
+            if not skip_derivative:
+                time_domain = np.gradient(time_domain, 1)
+        if filtered:
+            time_domain = signal.filtfilt(self.fir_taps, 1, time_domain)
         if window:
             center_index = int(time_domain.shape[0] / 2)
             time_domain = time_domain[
@@ -226,15 +252,21 @@ class TheoreticalWavelet(object):
             return time_domain
 
 
-    def multiple_in_time_domain(self, window=None, resample=None):
+    def multiple_in_time_domain(self, window=None, resample=None, filtered=False):
         primary, reflected = (
-            self.primary_in_time_domain(window),
-            self.reflected_in_time_domain(window),
+            self.primary_in_time_domain(window, filtered=filtered),
+            self.reflected_in_time_domain(window, skip_derivative=True, filtered=filtered),
         )
         convolved = signal.convolve(primary, reflected, mode="same", method="direct")
         if self.component == 'tangential':
-            convolved = np.gradient(convolved, 2)
+            convolved = np.gradient(convolved, 1)
         if resample:
             return signal.resample(convolved, resample)
         else:
             return convolved
+
+class MultipleWavelets(object):
+    def __init__(self, rho_range=None, alpha_range=None, beta_range=None, pipe=None):
+        pass
+
+
