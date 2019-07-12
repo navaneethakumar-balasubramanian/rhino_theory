@@ -8,8 +8,10 @@ def wiggle_plot(wavelets, offsets, time_range, gain=20, color='k', ax=None):
 
     y = time_range
 
+    max_amplitude = np.max(wavelets)
+
     for offset, wavelet in zip(offsets,wavelets):
-        x = ((wavelet - wavelet.mean()) / wavelet.std()) * gain + offset
+        x = ((wavelet - wavelet.mean()) / max_amplitude) * gain + offset
         ax.plot(x, y ,'-', color=color)
         ax.fill_betweenx(y, offset, x, where=(x>=offset), color=color, interpolate=True)
 
