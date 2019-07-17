@@ -131,7 +131,7 @@ def update_figure(alpha, rho, beta, window, component, pipe_alpha, pipe_rho, pip
             "Filtered Multiple Wavelet (time)",
         )
 
-    pipe = Pipe(Ro=0.1365, Ri=0.0687, Rb=pipe_rb, alpha=pipe_alpha, rho=pipe_rho, beta=pipe_beta)
+    pipe = Pipe(Rb=pipe_rb, alpha=pipe_alpha, rho=pipe_rho, beta=pipe_beta)
     rock = Rock(alpha, rho, beta)
     wavelet = TheoreticalWavelet(pipe, rock, component=component, filterby=[bpf1, bpf2, bpf3, bpf4])
 

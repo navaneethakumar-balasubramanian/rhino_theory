@@ -5,7 +5,6 @@ box_control = {
     'border-radius': '.25rem',
     'border-color': '#6c757d',
     'padding': '5px',
-
 }
 
 input_control={'width': '70px', 'height': '20px'},

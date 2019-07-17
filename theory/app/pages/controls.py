@@ -3,6 +3,53 @@ import dash_core_components as dcc
 
 from theory.app.pages import css
 
+pegleg = html.Div([
+    html.H6('Pegleg Effect'),
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.Label("RC", id="pegleg-rc-title", className="column"),
+                        dcc.Input(
+                            id="pegleg-rc-input",
+                            value=-.357,
+                            type='number',
+                            className="m-1",
+                            style={'width': '70px', 'height': '20px'},
+                        ),
+                    ],
+                ),
+                html.Div(
+                    [
+                        html.Label("delay (ms)", id="pegleg-delay-title", className="column"),
+                        dcc.Input(
+                            id="pegleg-delay-input",
+                            value=1.6,
+                            type='number',
+                            className="m-1",
+                            style={'width': '70px', 'height': '20px'},
+                        ),
+                    ],
+                ),
+                html.Div([
+                        dcc.Checklist(
+                            options=[
+                                {'label': 'Add Pegleg Effect', 'value': 'add-pegleg'},
+                            ],
+                            value=[],
+                            id='pegleg-controls',
+                        )
+                    ],
+                    className='m-1 d-flex flex-row',
+                )
+            ],
+            className="d-flex flex-row",
+            style=css.box_control,
+        ),
+    ],
+    className="d-flex flex-column m-1"
+)
+
 window_controls = [
         html.Label(
             "window", id="window-title",
@@ -56,7 +103,7 @@ debugger_controls = html.Div([
                     className='m-1 d-flex flex-row',
                 )
             ],
-            className="m-2 d-flex flex-row",
+            className="d-flex flex-row",
             style=css.box_control,
         ),
     ],
@@ -70,7 +117,7 @@ explore_controls = html.Div([
                 *window_controls,
                 *gain_controls,
             ],
-            className="m-2 d-flex flex-row",
+            className="d-flex flex-row",
             style=css.box_control,
         ),
     ],

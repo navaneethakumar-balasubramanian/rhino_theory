@@ -13,11 +13,21 @@ class Pipe(object):
         rho (np.array or float): Density of the drill stem.
     """
 
-    def __init__(self, Ro=0.1365, Ri=0.0687, Rb=0.16, alpha=4875,
-                 rho=7200, beta=2368, component='axial'):
+    def __init__(self,
+                 outer_diameter=0.1365,
+                 inner_diameter=0.0687,
+                 Rb=0.16,
+                 alpha=4875,
+                 rho=7200,
+                 beta=2368,
+                 component='axial'):
 
-        self.Ro = Ro
-        self.Ri = Ri
+        self.outer_diameter = outer_diameter
+        self.inner_diameter = inner_diameter
+        self.outer_radius = outer_diameter / 2
+        self.inner_radius = inner_diameter / 2
+        self.Ro =self.outer_radius
+        self.Ri = self.inner_radius
         self.Rb = Rb
         self.alpha = alpha
         self.rho = rho
@@ -29,7 +39,7 @@ class Pipe(object):
         """
         Effective drill stem area for axial.
         """
-        return np.pi * ((self.Ro ** 2) - (self.Ri ** 2))
+        return np.pi * ((self.outer_radius ** 2) - (self.inner_radius ** 2))
 
     @property
     def Ab(self):
@@ -68,7 +78,8 @@ class TheoreticalWavelet(object):
                  rock,
                  frequency_resolution=0.5,
                  nyquist=5000,
-                 filterby=[40, 50, 200, 240],
+                 filterby=[30, 45, 160, 200],
+                 filter_duration=0.025,
                  component='axial'):
 
 
@@ -100,7 +111,6 @@ class TheoreticalWavelet(object):
         if filterby:
             corners = filterby
 
-            filter_duration = 0.1
             firls = FIRLSFilter(corners, filter_duration)
             self.fir_taps = firls.make(self.sampling_rate)
 
@@ -208,7 +218,7 @@ class TheoreticalWavelet(object):
         complex_array = self.amp_phase2complex(amplitude, phase)
         return self.inverse_transform(complex_array)
 
-    def primary_in_time_domain(self, window=None, resample=None, skip_derivative=False, filtered=True):
+    def primary_in_time_domain(self, window=None, resample=None, skip_derivative=False, filtered=False):
         """
         """
         time_domain = self._wavelet_to_timedomain(
@@ -264,6 +274,12 @@ class TheoreticalWavelet(object):
             return signal.resample(convolved, resample)
         else:
             return convolved
+
+    def pegleg_effect(self, delay_in_ms=.52, RC=-.357, window=100, filtered=False):
+        multiple = self.multiple_in_time_domain(window, filtered=filtered)
+        samples_to_shift = int((delay_in_ms / 1000) / self.sampling_interval)
+        pegleg = np.pad(multiple, [samples_to_shift, 0], 'linear_ramp')[:-samples_to_shift]
+        return pegleg * RC
 
 class MultipleWavelets(object):
     def __init__(self, rho_range=None, alpha_range=None, beta_range=None, pipe=None):
