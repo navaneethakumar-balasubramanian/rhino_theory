@@ -79,7 +79,7 @@ class TheoreticalWavelet(object):
                  frequency_resolution=0.5,
                  nyquist=5000,
                  filterby=[30, 45, 160, 200],
-                 filter_duration=0.025,
+                 filter_duration=0.1,
                  component='axial'):
 
 
@@ -218,6 +218,13 @@ class TheoreticalWavelet(object):
         complex_array = self.amp_phase2complex(amplitude, phase)
         return self.inverse_transform(complex_array)
 
+    def get_window_from_center(self, window, array):
+        center_index = int(array.shape[0] / 2)
+        array = array[
+            center_index - int(window / 2) : center_index + int(window / 2)
+        ]
+        return array
+
     def primary_in_time_domain(self, window=None, resample=None, skip_derivative=False, filtered=False):
         """
         """
@@ -230,10 +237,7 @@ class TheoreticalWavelet(object):
         if filtered:
             time_domain = signal.filtfilt(self.fir_taps, 1, time_domain)
         if window:
-            center_index = int(time_domain.shape[0] / 2)
-            time_domain = time_domain[
-                center_index - int(window / 2) : center_index + int(window / 2)
-            ]
+            time_domain = self.get_window_from_center(window, time_domain)
         if resample:
             return signal.resample(time_domain, resample)
         else:
@@ -252,10 +256,7 @@ class TheoreticalWavelet(object):
         if filtered:
             time_domain = signal.filtfilt(self.fir_taps, 1, time_domain)
         if window:
-            center_index = int(time_domain.shape[0] / 2)
-            time_domain = time_domain[
-                center_index - int(window / 2) : center_index + int(window / 2)
-            ]
+            time_domain = self.get_window_from_center(window, time_domain)
         if resample:
             return signal.resample(time_domain, resample)
         else:
@@ -275,8 +276,8 @@ class TheoreticalWavelet(object):
         else:
             return convolved
 
-    def pegleg_effect(self, delay_in_ms=.52, RC=-.357, window=100, filtered=False):
-        multiple = self.multiple_in_time_domain(window, filtered=filtered)
+    def pegleg_effect(self, delay_in_ms=.52, RC=-.357, window=100):
+        multiple = self.multiple_in_time_domain(window, filtered=False)
         samples_to_shift = int((delay_in_ms / 1000) / self.sampling_interval)
         pegleg = np.pad(multiple, [samples_to_shift, 0], 'linear_ramp')[:-samples_to_shift]
         return pegleg * RC
