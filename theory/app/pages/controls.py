@@ -36,7 +36,7 @@ pegleg = html.Div([
                             options=[
                                 {'label': 'Add Pegleg Effect', 'value': 'add-pegleg'},
                             ],
-                            value=[],
+                            value=['add-pegleg'],
                             id='pegleg-controls',
                         )
                     ],

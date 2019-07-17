@@ -17,6 +17,8 @@ from theory.app.pages.controls import component_controls, pipe_controls, filter_
 from theory.plotting import wiggle_plot
 from theory.app.utils import mplfig_to_uri
 
+from scipy import signal
+
 plt.style.use('seaborn-dark')
 
 layout = html.Div(
@@ -110,10 +112,15 @@ def update_figure(wavelet, component, pipe_alpha, pipe_rho, pipe_beta, pipe_rb,
         theoretical = TheoreticalWavelet(pipe, rock, component=component,
                                          filterby=[bpf1, bpf2, bpf3, bpf4])
 
-        w = getattr(theoretical, '{}_in_time_domain'.format(wavelet))(
-            window, filtered=True)
         if add_pegleg:
-            w += theoretical.pegleg_effect(delay_in_ms=delay, RC=rc, window=window, filtered=True)
+            w = getattr(theoretical, '{}_in_time_domain'.format(wavelet))(
+                window=None, filtered=False)
+            w += theoretical.pegleg_effect(delay_in_ms=delay, RC=rc, window=None)
+            w = signal.filtfilt(theoretical.fir_taps, 1, w)
+            w = theoretical.get_window_from_center(window, w)
+        else:
+            w = getattr(theoretical, '{}_in_time_domain'.format(wavelet))(
+                window, filtered=True)
         wavelets.append(w)
 
     fig, ax = wiggle_plot(wavelets, alpha_range,
