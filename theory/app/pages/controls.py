@@ -163,7 +163,7 @@ wavelet_controls = html.Div([
 
 def bandpass_inputs():
     inputs = []
-    defaults = [40, 50, 200, 240]
+    defaults = [35, 40, 160, 200]
     for i, d in zip(range(1, 5), defaults):
         name = 'bpf{}'.format(str(i))
         inputs.append(html.Div(
@@ -332,8 +332,8 @@ rock_range_controls = html.Div([
                                     html.Div([
                                         dcc.RangeSlider(
                                                 id="velocity-range-slider",
-                                                min=500,
-                                                max=5000,
+                                                min=200,
+                                                max=9000,
                                                 step=100,
                                                 value=[1500, 3000],
                                                 pushable=1000,
