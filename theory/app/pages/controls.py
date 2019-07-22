@@ -3,6 +3,23 @@ import dash_core_components as dcc
 
 from theory.app.pages import css
 
+diff_controls = html.Div([
+        html.H6('Differentiate'),
+        html.Div(
+            [
+                dcc.Checklist(
+                    options=[
+                        {'label': 'Add Differentiation', 'value': 'add-diff'},
+                    ],
+                    value=[],
+                    id='diff-controls',
+                )
+            ],
+        ),
+    ],
+)
+
+
 pegleg = html.Div([
     html.H6('Pegleg Effect'),
         html.Div(
