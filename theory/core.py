@@ -54,7 +54,7 @@ class Pipe(object):
         Steel impedance.
         """
         if self.component == 'axial':
-            return self.Ab * self.rho * self.alpha
+            return self.Ab * self.rho * self.alpha * (3/4)
         if self.component == 'tangential':
             return self.Ab * self.rho * self.beta
 
@@ -151,22 +151,47 @@ class TheoreticalWavelet(object):
 
     @property
     def primary_in_frequency_domain_complex(self):
+        '''
+        The ifft of primary complex is a scaled version of measured primary
+        waveform.
 
-        RC_complex = (self.pipe.Z1 * self.Zb) / (self.pipe.Z1 + self.Zb)
+        Axial: The real-valued scale factor depends on Force, through
+        displacement and is inversely related to ROP.
+
+        Tangential: The real-valued scale factor equals the ratio of RPM to
+        ROP.
+
+        That is the primary assuming no multiples in the drill string (or
+        multiples are not interacting) and assumes that the measurement at the
+        top of the drill is wave-particle velocity (not accelration)
+
+        The original model (theoretical equations) is in terms of Poletto's
+        particle velocity is differentiated so it is cast in terms of
+        accleration so that it is directly comparable to our field observations
+        (which are acceleration(t))
+        '''
+
+
+        primary_complex = (self.pipe.Z1 * self.Zb) / (self.pipe.Z1 + self.Zb)
 
         if not (type(self.frequencies) in (int, float)):
-            RC_complex = self._fill_complex_nans(RC_complex)
+            primary_complex = self._fill_complex_nans(primary_complex)
 
-        return (RC_complex)
+        return (primary_complex)
 
     @property
     def reflected_in_frequency_domain_complex(self):
+        '''
+        This is the complex-valued reflection coeffictient which
+        effectively multiplies an input (downgoing) wavefunction incident
+        at the bit-rock boundary in frequency domain.  Its IFFT would be
+        convolved with the downgoing wave in time domain.
+        '''
 
-        #brunos implementation
-        RC_complex = (self.pipe.Z1 - self.Zb) / (self.pipe.Z1 + self.Zb)
+        reflected_complex = (self.pipe.Z1 - self.Zb) / (self.pipe.Z1 + self.Zb)
         if not (type(self.frequencies) in (int, float)):
-            RC_complex = self._fill_complex_nans(RC_complex)
-        return RC_complex
+            reflected_complex = self._fill_complex_nans(reflected_complex)
+        return reflected_complex
 
 
     @property
@@ -233,7 +258,7 @@ class TheoreticalWavelet(object):
         ).real
         if self.component == 'tangential':
             if not skip_derivative:
-                time_domain = np.gradient(time_domain, 1)
+                time_domain = np.gradient(time_domain, self.sampling_interval)
         if filtered:
             time_domain = signal.filtfilt(self.fir_taps, 1, time_domain)
         if window:
@@ -252,7 +277,7 @@ class TheoreticalWavelet(object):
         ).real
         if self.component == 'tangential':
             if not skip_derivative:
-                time_domain = np.gradient(time_domain, 1)
+                time_domain = np.gradient(time_domain, self.sampling_interval)
         if filtered:
             time_domain = signal.filtfilt(self.fir_taps, 1, time_domain)
         if window:
@@ -270,7 +295,7 @@ class TheoreticalWavelet(object):
         )
         convolved = signal.convolve(primary, reflected, mode="same", method="direct")
         if self.component == 'tangential':
-            convolved = np.gradient(convolved, 1)
+            convolved = np.gradient(convolved, self.sampling_interval)
         if resample:
             return signal.resample(convolved, resample)
         else:
