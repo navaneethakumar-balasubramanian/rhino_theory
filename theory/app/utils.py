@@ -1,7 +1,11 @@
 import matplotlib.pyplot as plt
+import matplotlib
+
 import numpy as np
 from io import BytesIO
 import base64
+
+matplotlib.use('Agg')
 
 def mplfig_to_uri(in_fig, close_all=True, **save_args):
     # type: (plt.Figure) -> str
