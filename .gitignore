@@ -2,3 +2,9 @@
 *.pyc
 
 notebooks/data\.msgpack
+
+theory/\.ipynb_checkpoints/
+
+notebooks/\.ipynb_checkpoints/
+
+notebooks/ReflectivityAtBit_badstuff\.ipynb
