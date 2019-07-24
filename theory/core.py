@@ -3,6 +3,9 @@ from scipy import signal
 
 from dcrhino3.signal_processing.filters import FIRLSFilter
 
+import warnings
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
 class Pipe(object):
     """
     Args:
@@ -14,6 +17,8 @@ class Pipe(object):
     """
 
     def __init__(self,
+                 length=12,
+
                  outer_diameter=0.1365,
                  inner_diameter=0.0687,
                  Rb=0.16,
@@ -26,7 +31,7 @@ class Pipe(object):
         self.inner_diameter = inner_diameter
         self.outer_radius = outer_diameter / 2
         self.inner_radius = inner_diameter / 2
-        self.Ro =self.outer_radius
+        self.Ro = self.outer_radius
         self.Ri = self.inner_radius
         self.Rb = Rb
         self.alpha = alpha
@@ -275,9 +280,9 @@ class TheoreticalWavelet(object):
         time_domain = self._wavelet_to_timedomain(
             *self.reflected_in_frequency_domain
         ).real
-        if self.component == 'tangential':
-            if not skip_derivative:
-                time_domain = np.gradient(time_domain, self.sampling_interval)
+        # if self.component == 'tangential':
+        #     if not skip_derivative:
+        #         time_domain = np.gradient(time_domain, self.sampling_interval)
         if filtered:
             time_domain = signal.filtfilt(self.fir_taps, 1, time_domain)
         if window:
@@ -294,8 +299,8 @@ class TheoreticalWavelet(object):
             self.reflected_in_time_domain(window, skip_derivative=True, filtered=filtered),
         )
         convolved = signal.convolve(primary, reflected, mode="same", method="direct")
-        if self.component == 'tangential':
-            convolved = np.gradient(convolved, self.sampling_interval)
+        # if self.component == 'tangential':
+        #     convolved = np.gradient(convolved, self.sampling_interval)
         if resample:
             return signal.resample(convolved, resample)
         else:

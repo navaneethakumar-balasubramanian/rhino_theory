@@ -3,9 +3,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-import plotly.plotly as py
-import plotly.graph_objs as go
-from plotly import tools
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 import numpy as np
 
@@ -194,7 +193,7 @@ def update_figure(alpha, rho, beta, window, component, pipe_alpha, pipe_rho, pip
         marker=dict(color="blue"),
     )
 
-    fig = tools.make_subplots(
+    fig = make_subplots(
         rows=5 if not hide_complex else 5-2,
         cols=6,
         specs=specs,
