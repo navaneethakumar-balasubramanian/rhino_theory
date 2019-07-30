@@ -287,7 +287,7 @@ rock_controls = html.Div([
             [
                 html.Div(
                     [
-                        html.Label("rho", id="rho-title", className="column"),
+                        html.Label("rho (kg m−3)", id="rho-title", className="column"),
                         dcc.Slider(
                             id="rho-slider",
                             min=1000,
@@ -301,7 +301,7 @@ rock_controls = html.Div([
                 ),
                 html.Div(
                     [
-                        html.Label("alpha", id="alpha-title", className="column"),
+                        html.Label("alpha (m/s)", id="alpha-title", className="column"),
                         dcc.Slider(
                             id="alpha-slider",
                             min=1000,
@@ -315,13 +315,13 @@ rock_controls = html.Div([
                 ),
                 html.Div(
                     [
-                        html.Label("beta", id="beta-title", className="column"),
+                        html.Label("beta (m/s)", id="beta-title", className="column"),
                         dcc.Slider(
                             id="beta-slider",
                             min=500,
                             max=9000,
                             step=100,
-                            value=500,
+                            value=900,
                             className="column",
                         ),
                     ],
