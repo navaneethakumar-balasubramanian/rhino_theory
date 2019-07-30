@@ -53,9 +53,9 @@ layout = html.Div(
 )
 def update_alpha_range_title(value, component):
     if component == 'axial':
-        return "alpha: {}".format('-'.join(str(v) for v in value))
+        return "alpha (m/s): {}".format('-'.join(str(v) for v in value))
     if component == 'tangential':
-        return "beta: {}".format('-'.join(str(v) for v in value))
+        return "beta (m/s): {}".format('-'.join(str(v) for v in value))
 
 @app.callback(
     dash.dependencies.Output("gain-title", "children"),
