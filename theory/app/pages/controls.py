@@ -29,7 +29,7 @@ pegleg = html.Div([
                         html.Label("RC", id="pegleg-rc-title", className="column"),
                         dcc.Input(
                             id="pegleg-rc-input",
-                            value=-.357,
+                            value=.28,
                             type='number',
                             className="m-1",
                             style={'width': '70px', 'height': '20px'},
@@ -41,7 +41,7 @@ pegleg = html.Div([
                         html.Label("delay (ms)", id="pegleg-delay-title", className="column"),
                         dcc.Input(
                             id="pegleg-delay-input",
-                            value=1.6,
+                            value=1.0,
                             type='number',
                             className="m-1",
                             style={'width': '70px', 'height': '20px'},
@@ -195,6 +195,18 @@ def bandpass_inputs():
                 ),
             ],
         ),)
+    html.Div(
+            [
+                html.Label("duration", id=name, className="column"),
+                dcc.Input(
+                    id=name,
+                    value=0.1,
+                    type='number',
+                    className="m-1",
+                    style={'width': '70px', 'height': '20px'},
+                ),
+            ],
+    )
     return inputs
 
 filter_controls = html.Div([
@@ -309,7 +321,7 @@ rock_controls = html.Div([
                             min=500,
                             max=9000,
                             step=100,
-                            value=1500,
+                            value=500,
                             className="column",
                         ),
                     ],
