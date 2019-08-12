@@ -18,7 +18,7 @@ class Pipe(object):
 
     def __init__(self,
                  length=12,
-
+                 contact_factor=1/10,
                  outer_diameter=0.1365,
                  inner_diameter=0.0687,
                  Rb=0.16,
@@ -37,6 +37,7 @@ class Pipe(object):
         self.alpha = alpha
         self.rho = rho
         self.beta = beta
+        self.contact_factor = contact_factor
         self.component = component
 
     @property
@@ -51,7 +52,7 @@ class Pipe(object):
         """
         Area of the bit contacting rock.
         """
-        return np.pi * (self.Rb ** 2)
+        return np.pi * (self.Rb ** 2) * self.contact_factor
 
     @property
     def Z1(self):
@@ -59,9 +60,9 @@ class Pipe(object):
         Steel impedance.
         """
         if self.component == 'axial':
-            return self.Ab * self.rho * self.alpha * (3/4)
+            return self.Ab * self.rho * self.alpha
         if self.component == 'tangential':
-            return self.Ab * self.rho * self.beta * (3/4)
+            return self.Ab * self.rho * self.beta
 
 class Rock(object):
     """
