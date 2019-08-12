@@ -61,7 +61,7 @@ class Pipe(object):
         if self.component == 'axial':
             return self.Ab * self.rho * self.alpha * (3/4)
         if self.component == 'tangential':
-            return self.Ab * self.rho * self.beta
+            return self.Ab * self.rho * self.beta * (3/4)
 
 class Rock(object):
     """
