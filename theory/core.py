@@ -121,6 +121,9 @@ class TheoreticalWavelet(object):
             self.fir_taps = firls.make(self.sampling_rate)
 
     def get_time_range_for_window(self, window):
+        '''
+        Get a range of time values in ms.
+        '''
         time_sampling_window = (np.arange(
                 0 - (window / 2 * self.sampling_interval),
                 0 + (window / 2 * self.sampling_interval),   self.sampling_interval,)* 1000)
@@ -188,6 +191,9 @@ class TheoreticalWavelet(object):
     @property
     def reflected_in_frequency_domain_complex(self):
         '''
+        An impulse coming down from the bitsub hitting the bit-rock interface
+        and coming back up.
+
         This is the complex-valued reflection coeffictient which
         effectively multiplies an input (downgoing) wavefunction incident
         at the bit-rock boundary in frequency domain.  Its IFFT would be
@@ -258,6 +264,7 @@ class TheoreticalWavelet(object):
 
     def primary_in_time_domain(self, window=None, resample=None, skip_derivative=False, filtered=False):
         """
+        Upcoming wavelet from the bit-rock interaction (JR).
         """
         time_domain = self._wavelet_to_timedomain(
             *self.primary_in_frequency_domain
@@ -277,6 +284,8 @@ class TheoreticalWavelet(object):
 
     def reflected_in_time_domain(self, window=None, resample=None, skip_derivative=False, filtered=False):
         """
+        An impulse coming down from the bitsub hitting the bit-rock interface
+        and coming back up (JR).
         """
         time_domain = self._wavelet_to_timedomain(
             *self.reflected_in_frequency_domain
@@ -294,21 +303,27 @@ class TheoreticalWavelet(object):
             return time_domain
 
 
-    def multiple_in_time_domain(self, window=None, resample=None, filtered=False):
+    def multiple_in_time_domain(self, window=None, resample=None, filtered=False, skip_derivative=True):
+        '''
+        The convolution of primary and reflected wavelet (JR).
+        '''
         primary, reflected = (
-            self.primary_in_time_domain(window, filtered=filtered),
+            self.primary_in_time_domain(window, filtered=filtered, skip_derivative=skip_derivative),
             self.reflected_in_time_domain(window, skip_derivative=True, filtered=filtered),
         )
         convolved = signal.convolve(primary, reflected, mode="same", method="direct")
-        # if self.component == 'tangential':
-        #     convolved = np.gradient(convolved, self.sampling_interval)
         if resample:
             return signal.resample(convolved, resample)
         else:
             return convolved
 
-    def pegleg_effect(self, delay_in_ms=.52, RC=-.357, window=100):
-        multiple = self.multiple_in_time_domain(window, filtered=False)
+    def pegleg_effect(self, delay_in_ms=.52, RC=-.357, window=100, skip_derivative=True):
+        '''
+        The sum of the primary and the delayed and scaled multiple wavelet
+        where the scaling is equal to the reflection at the bit sub drill pipe
+        interface (JR).
+        '''
+        multiple = self.multiple_in_time_domain(window, filtered=False, skip_derivative=skip_derivative)
         samples_to_shift = int((delay_in_ms / 1000) / self.sampling_interval)
         pegleg = np.pad(multiple, [samples_to_shift, 0], 'linear_ramp')[:-samples_to_shift]
         return pegleg * RC
