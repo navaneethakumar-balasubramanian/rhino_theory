@@ -52,7 +52,7 @@ class Pipe(object):
         """
         Area of the bit contacting rock.
         """
-        return np.pi * (self.Rb ** 2) * self.contact_factor
+        return np.pi * (self.Rb ** 2)
 
     @property
     def Z1(self):
@@ -60,9 +60,9 @@ class Pipe(object):
         Steel impedance.
         """
         if self.component == 'axial':
-            return self.Ab * self.rho * self.alpha
+            return self.Ab * self.rho * self.alpha * self.contact_factor
         if self.component == 'tangential':
-            return self.Ab * self.rho * self.beta
+            return self.Ab * self.rho * self.beta * self.contact_factor
 
 class Rock(object):
     """
@@ -262,7 +262,7 @@ class TheoreticalWavelet(object):
         ]
         return array
 
-    def primary_in_time_domain(self, window=None, resample=None, skip_derivative=False, filtered=False):
+    def primary_in_time_domain(self, window=None, resample=None, skip_derivative=True, filtered=False):
         """
         Upcoming wavelet from the bit-rock interaction (JR).
         """
@@ -282,7 +282,9 @@ class TheoreticalWavelet(object):
             return time_domain
 
 
-    def reflected_in_time_domain(self, window=None, resample=None, skip_derivative=False, filtered=False):
+    def reflected_in_time_domain(self, window=None, resample=None,
+                                 skip_derivative=False, second_derivative=True,
+                                 filtered=False):
         """
         An impulse coming down from the bitsub hitting the bit-rock interface
         and coming back up (JR).
@@ -290,9 +292,11 @@ class TheoreticalWavelet(object):
         time_domain = self._wavelet_to_timedomain(
             *self.reflected_in_frequency_domain
         ).real
-        # if self.component == 'tangential':
-        #     if not skip_derivative:
-        #         time_domain = np.gradient(time_domain, self.sampling_interval)
+        if self.component == 'tangential':
+            if not skip_derivative:
+                time_domain = np.gradient(time_domain, self.sampling_interval)
+                if second_derivative:
+                    time_domain = np.gradient(time_domain, self.sampling_interval)
         if filtered:
             time_domain = signal.filtfilt(self.fir_taps, 1, time_domain)
         if window:
@@ -303,13 +307,17 @@ class TheoreticalWavelet(object):
             return time_domain
 
 
-    def multiple_in_time_domain(self, window=None, resample=None, filtered=False, skip_derivative=True):
+    def multiple_in_time_domain(self, window=None, resample=None, filtered=False,
+                                skip_primary_derivative=True,
+                                skip_reflected_derivative=True,
+                                second_derivative_on_reflected=True,
+                                ):
         '''
         The convolution of primary and reflected wavelet (JR).
         '''
         primary, reflected = (
-            self.primary_in_time_domain(window, filtered=filtered, skip_derivative=skip_derivative),
-            self.reflected_in_time_domain(window, skip_derivative=True, filtered=filtered),
+            self.primary_in_time_domain(window, filtered=filtered, skip_derivative=skip_primary_derivative),
+            self.reflected_in_time_domain(window, skip_derivative=skip_reflected_derivative, filtered=filtered, second_derivative=second_derivative_on_reflected),
         )
         convolved = signal.convolve(primary, reflected, mode="same", method="direct")
         if resample:
@@ -317,13 +325,20 @@ class TheoreticalWavelet(object):
         else:
             return convolved
 
-    def pegleg_effect(self, delay_in_ms=.52, RC=-.357, window=100, skip_derivative=True):
+    def pegleg_effect(self, delay_in_ms=.52, RC=-.357, window=100,
+                      skip_primary_derivative=True,
+                      skip_reflected_derivative=True,
+                      second_derivative_on_reflected=True,):
         '''
         The sum of the primary and the delayed and scaled multiple wavelet
         where the scaling is equal to the reflection at the bit sub drill pipe
         interface (JR).
         '''
-        multiple = self.multiple_in_time_domain(window, filtered=False, skip_derivative=skip_derivative)
+        multiple = self.multiple_in_time_domain(window, filtered=False,
+                                                skip_primary_derivative=skip_primary_derivative,
+                                                skip_reflected_derivative=skip_reflected_derivative,
+                                                second_derivative_on_reflected=second_derivative_on_reflected,
+                                                )
         samples_to_shift = int((delay_in_ms / 1000) / self.sampling_interval)
         pegleg = np.pad(multiple, [samples_to_shift, 0], 'linear_ramp')[:-samples_to_shift]
         return pegleg * RC
