@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import signal
+import pdb
 
 from dcrhino3.signal_processing.filters import FIRLSFilter
 
@@ -262,16 +263,13 @@ class TheoreticalWavelet(object):
         ]
         return array
 
-    def primary_in_time_domain(self, window=None, resample=None, skip_derivative=True, filtered=False):
+    def primary_in_time_domain(self, window=None, resample=None, filtered=False):
         """
         Upcoming wavelet from the bit-rock interaction (JR).
         """
         time_domain = self._wavelet_to_timedomain(
             *self.primary_in_frequency_domain
         ).real
-        if self.component == 'tangential':
-            if not skip_derivative:
-                time_domain = np.gradient(time_domain, self.sampling_interval)
         if filtered:
             time_domain = signal.filtfilt(self.fir_taps, 1, time_domain)
         if window:
@@ -282,9 +280,7 @@ class TheoreticalWavelet(object):
             return time_domain
 
 
-    def reflected_in_time_domain(self, window=None, resample=None,
-                                 skip_derivative=False, second_derivative=True,
-                                 filtered=False):
+    def reflected_in_time_domain(self, window=None, resample=None,filtered=False):
         """
         An impulse coming down from the bitsub hitting the bit-rock interface
         and coming back up (JR).
@@ -292,11 +288,6 @@ class TheoreticalWavelet(object):
         time_domain = self._wavelet_to_timedomain(
             *self.reflected_in_frequency_domain
         ).real
-        if self.component == 'tangential':
-            if not skip_derivative:
-                time_domain = np.gradient(time_domain, self.sampling_interval)
-                if second_derivative:
-                    time_domain = np.gradient(time_domain, self.sampling_interval)
         if filtered:
             time_domain = signal.filtfilt(self.fir_taps, 1, time_domain)
         if window:
@@ -307,17 +298,13 @@ class TheoreticalWavelet(object):
             return time_domain
 
 
-    def multiple_in_time_domain(self, window=None, resample=None, filtered=False,
-                                skip_primary_derivative=True,
-                                skip_reflected_derivative=True,
-                                second_derivative_on_reflected=True,
-                                ):
+    def multiple_in_time_domain(self, window=None, resample=None, filtered=False):
         '''
         The convolution of primary and reflected wavelet (JR).
         '''
         primary, reflected = (
-            self.primary_in_time_domain(window, filtered=filtered, skip_derivative=skip_primary_derivative),
-            self.reflected_in_time_domain(window, skip_derivative=skip_reflected_derivative, filtered=filtered, second_derivative=second_derivative_on_reflected),
+            self.primary_in_time_domain(window, filtered=filtered),
+            self.reflected_in_time_domain(window, filtered=filtered),
         )
         convolved = signal.convolve(primary, reflected, mode="same", method="direct")
         if resample:
@@ -325,23 +312,21 @@ class TheoreticalWavelet(object):
         else:
             return convolved
 
-    def pegleg_effect(self, delay_in_ms=.52, RC=-.357, window=100,
-                      skip_primary_derivative=True,
-                      skip_reflected_derivative=True,
-                      second_derivative_on_reflected=True,):
+    def pegleg_effect(self, delay_in_ms=.52, RC=-.357, window=100):
         '''
         The sum of the primary and the delayed and scaled multiple wavelet
         where the scaling is equal to the reflection at the bit sub drill pipe
         interface (JR).
         '''
-        multiple = self.multiple_in_time_domain(window, filtered=False,
-                                                skip_primary_derivative=skip_primary_derivative,
-                                                skip_reflected_derivative=skip_reflected_derivative,
-                                                second_derivative_on_reflected=second_derivative_on_reflected,
-                                                )
+        multiple = self.multiple_in_time_domain(window, filtered=False)
         samples_to_shift = int((delay_in_ms / 1000) / self.sampling_interval)
         pegleg = np.pad(multiple, [samples_to_shift, 0], 'linear_ramp')[:-samples_to_shift]
         return pegleg * RC
+			
+    def apply_derivative(self, array):
+        array = np.gradient(array, self.sampling_interval)
+        return array
+
 
 class MultipleWavelets(object):
     def __init__(self, rho_range=None, alpha_range=None, beta_range=None, pipe=None):
