@@ -322,7 +322,11 @@ class TheoreticalWavelet(object):
         samples_to_shift = int((delay_in_ms / 1000) / self.sampling_interval)
         pegleg = np.pad(multiple, [samples_to_shift, 0], 'linear_ramp')[:-samples_to_shift]
         return pegleg * RC
-			
+
+    def apply_time_shift(self, array, delay_in_ms=.52):
+        samples_to_shift = int((delay_in_ms / 1000) / self.sampling_interval)
+        return np.pad(array, [samples_to_shift, 0], 'linear_ramp')[:-samples_to_shift]
+
     def apply_derivative(self, array):
         array = np.gradient(array, self.sampling_interval)
         return array
@@ -331,5 +335,3 @@ class TheoreticalWavelet(object):
 class MultipleWavelets(object):
     def __init__(self, rho_range=None, alpha_range=None, beta_range=None, pipe=None):
         pass
-
-
