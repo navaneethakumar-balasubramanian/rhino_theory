@@ -86,7 +86,7 @@ class TheoreticalWavelet(object):
                  frequency_resolution=0.5,
                  nyquist=5000,
                  filterby=[30, 45, 160, 200],
-                 filter_duration=0.1,
+                 filter_duration=0.02,
                  component='axial'):
 
 
@@ -312,16 +312,22 @@ class TheoreticalWavelet(object):
         else:
             return convolved
 
-    def pegleg_effect(self, delay_in_ms=.52, RC=-.357, window=100):
+    def pegleg_rocksteel(self, delay_in_ms=.52, RC=-.357, window=100):
         '''
         The sum of the primary and the delayed and scaled multiple wavelet
         where the scaling is equal to the reflection at the bit sub drill pipe
         interface (JR).
         '''
         multiple = self.multiple_in_time_domain(window, filtered=False)
-        samples_to_shift = int((delay_in_ms / 1000) / self.sampling_interval)
-        pegleg = np.pad(multiple, [samples_to_shift, 0], 'linear_ramp')[:-samples_to_shift]
+        pegleg = self.apply_time_shift(multiple, delay_in_ms=delay_in_ms)
         return pegleg * RC
+
+    def pegleg_steelsteel(self, array, delay_in_ms=.52, RC=-.357, window=100):
+        pegleg = self.apply_time_shift(array, delay_in_ms=delay_in_ms)
+        return pegleg * RC
+
+    def apply_RC(self, array, RC):
+        return array * RC
 
     def apply_time_shift(self, array, delay_in_ms=.52):
         samples_to_shift = int((delay_in_ms / 1000) / self.sampling_interval)
@@ -332,6 +338,6 @@ class TheoreticalWavelet(object):
         return array
 
 
-class MultipleWavelets(object):
+class Modeling(object):
     def __init__(self, rho_range=None, alpha_range=None, beta_range=None, pipe=None):
         pass
