@@ -16,8 +16,12 @@ class ModelingFunction:
         self.variables = [c for c in variables if c in equation]
         self._fitted = False
 
-    def __call__(self, *args):
-        return self._function(*args)
+    def __call__(self, X, *args):
+        X = np.asarray(X)
+        if self._fitted:
+            return self.as_partial(X)
+        else:
+            return self.as_function(X, *args)
 
     @property
     def as_function(self):
@@ -30,12 +34,15 @@ class ModelingFunction:
     def as_partial(self):
         if self._fitted:
             return partial(self.as_function, **dict(list(zip(self.as_function.__code__.co_varnames, np.r_[None, self.optimals]))[1:]))
+        else:
+            return self.as_function
 
     def fit(self, X, y):
         self._fitted = True
-        self.optimals, _ = curve_fit(self.as_function, X, y, maxrev=1000000)
+        self.optimals, _ = curve_fit(self.as_function, X, y, maxfev=1000000)
 
     def predict(self, X):
+        X = np.asarray(X)
         return self.as_function(X, *self.optimals)
 
     def get_fitted_string(self):

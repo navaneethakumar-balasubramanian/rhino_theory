@@ -76,6 +76,11 @@ class Rock(object):
         self.alpha = alpha
         self.rho = rho
         self.beta = beta
+        if component == 'axial':
+            self.modulus = ((rho/1000)*((alpha/1000)**2))
+        if component == 'tangential':
+            self.modulus = ((rho/1000)*((beta/1000)**2))
+
 
 
 class TheoreticalWavelet(object):
