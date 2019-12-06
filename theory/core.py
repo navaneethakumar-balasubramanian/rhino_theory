@@ -325,7 +325,10 @@ class TheoreticalWavelet(object):
         '''
         multiple = self.multiple_in_time_domain(window, filtered=False)
         pegleg = self.apply_time_shift(multiple, delay_in_ms=delay_in_ms)
-        return pegleg * RC
+        if self.component == 'axial':
+            return -1 * pegleg * RC
+        else:
+            return pegleg * RC
 
     def pegleg_steelsteel(self, array, delay_in_ms=.52, RC=-.357, window=100):
         pegleg = self.apply_time_shift(array, delay_in_ms=delay_in_ms)
