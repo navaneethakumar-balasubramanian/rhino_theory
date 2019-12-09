@@ -298,9 +298,10 @@ class TheoreticalWavelet(object):
         if window:
             time_domain = self.get_window_from_center(window, time_domain)
         if resample:
-            return signal.resample(time_domain, resample)
-        else:
-            return time_domain
+            time_domain = signal.resample(time_domain, resample)
+        if self.component == 'axial':
+            time_domain = -1 * time_domain
+        return time_domain
 
 
     def multiple_in_time_domain(self, window=None, resample=None, filtered=False):
@@ -325,10 +326,11 @@ class TheoreticalWavelet(object):
         '''
         multiple = self.multiple_in_time_domain(window, filtered=False)
         pegleg = self.apply_time_shift(multiple, delay_in_ms=delay_in_ms)
-        if self.component == 'axial':
-            return -1 * pegleg * RC
-        else:
-            return pegleg * RC
+        # OLD WAY TO APPLY THE -1 - MOVED TO REFLECTED_WAVELET
+        # if self.component == 'axial':
+        #     return -1 * pegleg * RC
+        # else:
+        return pegleg * RC
 
     def pegleg_steelsteel(self, array, delay_in_ms=.52, RC=-.357, window=100):
         pegleg = self.apply_time_shift(array, delay_in_ms=delay_in_ms)
