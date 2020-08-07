@@ -1,5 +1,5 @@
 
-# Rhino Log Processing
+# Rhino Theory
 
 ## Installing rhino_theory
 

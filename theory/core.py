@@ -303,7 +303,6 @@ class TheoreticalWavelet(object):
             time_domain = -1 * time_domain
         return time_domain
 
-
     def multiple_in_time_domain(self, window=None, resample=None, filtered=False):
         '''
         The convolution of primary and reflected wavelet (JR).
