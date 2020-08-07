@@ -1,8 +1,8 @@
 import logging
 import numpy as np
 from itertools import product
-from rhino_lp.logs.utils import GetterClass
-from rhino_lp.logs.constants import (
+from .utils import GetterClass
+from .constants import (
     COMPONENTS,
     FEATURES,
     RECIPES,
