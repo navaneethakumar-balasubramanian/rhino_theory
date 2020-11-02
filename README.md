@@ -9,8 +9,8 @@ rhino_theory: Software for modeling  theoretical wavelets and post processing fu
 - theory/feature_extraction.py: Second layer of feature extraction (post process to dcrhino_lib's feature extraction) to generate uncalibrated modulus, velocity and pseudo-density;
 - theory/function_handler.py: A helper class to model by optimization (using scipy's curve_fit) the rock properties vs the extracted features of the theoretical wavelets by pipe.
 - theory/plotting.py: wiggle plot function;
+- theory/app: an under development flask app to visualize the theoretical wavelet.
 
-Edited
 ## Installing rhino_theory
 
 1. `git clone` the repo;
